@@ -26,7 +26,11 @@ AI-powered investor research tool that processes natural language queries to gen
 > "Generate a list of Investors that invest in automotive space in Germany, I just need companies names, website and LinkedIn URL. Take investors from Project ENIGMA and add additional investors from Crunchbase that do tickets between 5-10 million and have a dry powder available. "
 
 ## Architecture
+
+4 directories, 14 files
 .
+├── .cursorrules
+├── .env
 ├── main.py
 ├── models
 │   └── schemas.py
@@ -42,4 +46,4 @@ AI-powered investor research tool that processes natural language queries to gen
 └── utils
     └── csv_export.py
 
-4 directories, 11 files
+4 directories, 13 files
