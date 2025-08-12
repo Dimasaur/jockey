@@ -11,11 +11,16 @@ def test_openai():
 
         response = client.chat.completions.create(
             model="gpt-4o-mini",
-            messagges=[{"role": "users", "content": "Hello, this is a test"}],
+            messages=[{"role": "user", "content": "Hello, this is a test"}],
             max_tokens=100,
         )
         print("✅ OpenAI API: Working")
         print(f"Response: {response.choices[0].message.content}")
+        return True
     except Exception as e:
         print(f"❌ OpenAI API: {e}")
         return False
+
+if __name__ == "__main__":
+    print("Testing OpenAI API...")
+    test_openai()
