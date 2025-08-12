@@ -14,7 +14,7 @@ requests==2.32.4
 python-dotenv==1.0.1
 
 # API integrations (library for interacting with Airtable API)
-airtable-python-wrapper==0.15.3
+pyairtable==3.1.1
 
 # Google services
 google-api-python-client==2.178.0
