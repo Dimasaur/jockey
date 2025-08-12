@@ -14,10 +14,10 @@ requests==2.32.4
 python-dotenv==1.0.1
 
 # API integrations (library for interacting with Airtable API)
-airtable-python-wrapper==0.19.0
+airtable-python-wrapper==0.15.3
 
 # Google services
-google-api-python-client==2.192.0
+google-api-python-client==2.178.0
 google-auth-oauthlib==1.2.0
 
 # Data export (reading and writing Excel files)
@@ -25,14 +25,14 @@ openpyxl==3.1.5
 
 # HTTP & API helpers (for Crunchbase API)
 httpx==0.28.1  # HTTP client for making API requests
-urllib3==2.2.4  # HTTP library for Python
+urllib3==2.5.0  # HTTP library for Python
 
 
 # Data & date validation
-pydantic==2.10.6  # Data validation
-pythondateutil==2.8.2  # Date and time manipulation
+pydantic==2.11.0  # Data validation
+python-dateutil==2.9.0.post0  # Date and time manipulation
 python-multipart==0.0.19  # Multipart/form-data encoding for file uploads
 
 # Email management
 email-validator==2.2.0 # Email validation
-jinja2==3.1.2 # Templating for HTML emails
+jinja2==3.1.5 # Templating for HTML emails
