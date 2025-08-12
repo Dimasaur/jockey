@@ -4,3 +4,4 @@ __pycache__/
 *.pyc
 venv/
 .cursorrules
+google_credentials.json
