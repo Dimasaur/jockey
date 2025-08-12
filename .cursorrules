@@ -2,13 +2,13 @@
 
 This is an investor research prototype that:
 - Processes natural language queries about investors
-- Integrates Airtable (existing data) + Crunchbase (external data)
+- Integrates Airtable (existing data) + Apollo.io (external data)
 - Generate CSV exports and email drafts
 - Creates new proejcts and tracks warm leads
 
 ## Key APIs to integrate:
 - Airtable API (existing investor database)
-- Crunchbase API (external investor data)
+- Apollo.io API (external investor data)
 - OpenAI API (NLP query processing)
 - Gmail API (email drafting)
 - Google Calendar API (availability checking)
@@ -16,7 +16,7 @@ This is an investor research prototype that:
 ## Main workflow:
 1. Parse natural language query with OpenAI
 2. Query Airtable for existing investors
-3. Query Crunchbase for additional investors
+3. Query Apollo.io for additional investors
 4. Merge and filter results
 5. Generate CSV export
 6. Draft email with calendar availability
