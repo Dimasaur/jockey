@@ -5,3 +5,4 @@ __pycache__/
 venv/
 .cursorrules
 google_credentials.json
+token.pickle
