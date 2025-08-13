@@ -51,3 +51,88 @@ AI-powered investor research tool that processes natural language queries to gen
     └── csv_export.py
 
 4 directories, 19 files
+
+# Schema
+
+## High-Level Workflow
+
+Natural Language Query → AI Parser → Data Retrieval → Processing → Output Generation
+
+## Detailed Flow Diagram
+
+1. USER INPUT
+   ↓
+   "Generate automotive investors in Germany with 5-10M tickets from Project ENIGMA, create Project NEXUS"
+
+2. OPENAI PARSING
+   ↓
+   {
+     "industry": "automotive",
+     "location": "Germany",
+     "ticket_size": {"min": 5000000, "max": 10000000},
+     "source_project": "ENIGMA",
+     "new_project": "NEXUS",
+     "requirements": ["dry powder available"]
+   }
+
+3. DATA RETRIEVAL (Parallel)
+   ↓
+   ┌─ Airtable Query ────────────┐    ┌─ Apollo.io Search ──────────┐
+   │ • Search Project ENIGMA     │    │ • Industry: automotive       │
+   │ • Filter by criteria        │    │ • Location: Germany          │
+   │ • Mark as "warm leads"      │    │ • Ticket size: 5-10M         │
+   │ • Get investor details      │    │ • Active investors only      │
+   └─────────────────────────────┘    └──────────────────────────────┘
+
+4. DATA PROCESSING
+   ↓
+   • Merge Airtable + Apollo results
+   • Remove duplicates
+   • Apply filters (ticket size, requirements)
+   • Mark warm vs cold leads
+   • Format for output
+
+5. OUTPUT GENERATION (Parallel)
+   ↓
+   ┌─ CSV Export ────────────────┐    ┌─ Email Draft ───────────────┐    ┌─ Airtable Project ─────────┐
+   │ • Company names             │    │ • Professional summary      │    │ • Create "Project NEXUS"    │
+   │ • Websites                  │    │ • Calendar availability     │    │ • Add investor list         │
+   │ • Investment focus          │    │ • Call scheduling           │    │ • Mark warm lead status     │
+   │ • Ticket sizes              │    │ • Attachment reference      │    │ • Link to source data       │
+   └─────────────────────────────┘    └──────────────────────────────┘    └─────────────────────────────┘
+
+
+## Technical Architecture
+
+### Core Components
+
+┌─────────────────────────────────────────────────────────────┐
+│                        FastAPI Server                       │
+├─────────────────────────────────────────────────────────────┤
+│  POST /api/generate-investors                               │
+│  └─ Input: { "query": "natural language string" }          │
+│  └─ Output: { "investors": [], "csv_path": "", "email": ""} │
+└─────────────────────────────────────────────────────────────┘
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    Service Layer                            │
+├─────────────────────────────────────────────────────────────┤
+│  OpenAIService     │  AirtableService  │  ApolloService     │
+│  • parse_query()   │  • get_projects() │  • search_investors│
+│  • generate_email()│  • create_project │  • filter_results  │
+│                    │  • mark_leads()   │                    │
+├─────────────────────────────────────────────────────────────┤
+│  GmailService      │  CalendarService  │  CSVService        │
+│  • draft_email()   │  • get_availability│ • export_data()   │
+│  • send_email()    │  • suggest_slots  │  • format_output() │
+└─────────────────────────────────────────────────────────────┘
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    Data Layer                               │
+├─────────────────────────────────────────────────────────────┤
+│  Airtable API      │  Apollo.io API    │  Google APIs       │
+│  • Existing data   │  • External data  │  • Gmail/Calendar  │
+│  • Project mgmt    │  • Fresh leads    │  • Authentication  │
+└─────────────────────────────────────────────────────────────┘
