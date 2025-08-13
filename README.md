@@ -30,6 +30,9 @@ AI-powered investor research tool that processes natural language queries to gen
 ├── .cursorrules
 ├── .env
 ├── .gitignore
+├── API_SETUP.md
+├── env_template.txt
+├── google_credentials.json
 ├── main.py
 ├── models
 │   └── schemas.py
@@ -41,7 +44,10 @@ AI-powered investor research tool that processes natural language queries to gen
 │   ├── calendar.py
 │   ├── gmail.py
 │   └── openai_service.py
+├── setup_google_oauth.py
+├── test_apis.py
+├── token.pickle
 └── utils
     └── csv_export.py
 
-4 directories, 13 files
+4 directories, 19 files
