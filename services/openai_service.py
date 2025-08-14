@@ -13,8 +13,10 @@ class OpenAIService:
         """First pass: detect what components are mentioned in the query"""
 
         detection_prompt = """
-        Analyze this query and identify which components are mentioned or implied.
-        Return a JSON array of components found.
+        Analyze this query and identify ALL components that are mentioned or implied.
+        Be generous - if something could reasonably be extracted, include it!
+
+        Return ONLY a valid JSON array of component strings. Do not include any explanations or additional text.
 
         Possible components:
         - "industry" (automotive, fintech, healthcare, etc.)
@@ -29,7 +31,9 @@ class OpenAIService:
         - "portfolio_focus" (B2B, B2C, etc.)
         - "exit_strategy" (IPO, acquisition focus)
 
-        Example: ["industry", "location", "ticket_size", "new_project"]
+        Example response: ["industry", "location", "ticket_size", "new_project"]
+
+        IMPORTANT: Return ONLY the JSON array, no other text.
         """
 
         try:
@@ -39,15 +43,31 @@ class OpenAIService:
                     {"role":"system","content":detection_prompt},
                     {"role":"user","content": f"Query: {query}"}
                 ],
-                max_tokens=150
+                max_tokens=150,
+                temperature=0.1
             )
 
-            components = json.loads(response.choices[0].message.content)
+            content = response.choices[0].message.content.strip()
+
+            # Try to extract JSON if there's extra text
+            if content.startswith('[') and content.endswith(']'):
+                components = json.loads(content)
+            else:
+                # Try to find JSON array in the response
+                import re
+                json_match = re.search(r'\[.*?\]', content)
+                if json_match:
+                    components = json.loads(json_match.group())
+                else:
+                    print(f"Could not parse JSON from response: {content}")
+                    return ["industry", "location"]  # fallback
+
             return components
 
         except Exception as e:
             print(f"Error detecting components: {e}")
-            return ["industry","location"] # fallback
+            print(f"Response content: {response.choices[0].message.content if 'response' in locals() else 'No response'}")
+            return ["industry", "location"]  # fallback
 
 
     def _build_dynamic_schema(self, components: list[str]) -> dict[str, str]:
@@ -85,7 +105,7 @@ class OpenAIService:
         schema_description = "\n".join([f"- {field}: {desc}" for field, desc in schema.items()])
 
         extraction_prompt = f"""
-        Extract the following information from the user query and return as JSON:
+        Extract the following information from the user query and return as valid JSON:
 
         {schema_description}
 
@@ -93,14 +113,17 @@ class OpenAIService:
         - Only include fields that have actual values from the query
         - Use null for fields mentioned but without specific values
         - For ticket_size, convert amounts to numbers (e.g. "5-10M" = {{"min":5000000, "max":10000000}})
-        - Return valid JSON only, no explanatons
-
+        - Return ONLY valid JSON, no explanations or additional text
+        - Ensure all strings are properly quoted
+        - Ensure all brackets and braces are properly closed
 
         Example format:
         {{
-            "industry":"automotive",
-            "location":"Germany
+            "industry": "automotive",
+            "location": "Germany"
         }}
+
+        IMPORTANT: Return ONLY the JSON object, no other text.
         """
 
         try:
@@ -110,10 +133,24 @@ class OpenAIService:
                     {"role":"system","content":extraction_prompt},
                     {"role":"user","content":query}
                 ],
-                max_tokens=400
+                max_tokens=400,
+                temperature=0.1
             )
 
-            result = json.loads(response.choices[0].message.content)
+            content = response.choices[0].message.content.strip()
+
+            # Try to extract JSON if there's extra text
+            if content.startswith('{') and content.endswith('}'):
+                result = json.loads(content)
+            else:
+                # Try to find JSON object in the response
+                import re
+                json_match = re.search(r'\{.*\}', content, re.DOTALL)
+                if json_match:
+                    result = json.loads(json_match.group())
+                else:
+                    print(f"Could not parse JSON from response: {content}")
+                    raise ValueError("Invalid JSON response")
 
             # Add metadata about what was extracted
             result["_metadata"] = {
@@ -126,6 +163,7 @@ class OpenAIService:
 
         except Exception as e:
             print(f"❌ Extraction error: {e}")
+            print(f"Response content: {response.choices[0].message.content if 'response' in locals() else 'No response'}")
             return {
                 "error":str(e),
                 "_metadata": {
