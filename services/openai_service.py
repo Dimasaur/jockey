@@ -135,33 +135,33 @@ class OpenAIService:
             }
 
     # Test with various query types
-    if __name__ == "__main__":
-        service = OpenAIService()
+if __name__ == "__main__":
+    service = OpenAIService()
 
-        test_queries = [
-            # Simple query
-            "Find automotive investors in Germany",
+    test_queries = [
+        # Simple query
+        "Find automotive investors in Germany",
 
-            # Complex query with multiple components
-            "Generate Series A fintech investors in London with 2-5M tickets who have dry powder and focus on B2B SaaS, create Project LONDON-FINTECH",
+        # Complex query with multiple components
+        "Generate Series A fintech investors in London with 2-5M tickets who have dry powder and focus on B2B SaaS, create Project LONDON-FINTECH",
 
-            # Project-focused query
-            "Get warm leads from Project ENIGMA and add healthcare VCs in California",
+        # Project-focused query
+        "Get warm leads from Project ENIGMA and add healthcare VCs in California",
 
-            # Investment-focused query
-            "Find corporate VCs that invest in AI startups with recent IPO exits",
+        # Investment-focused query
+        "Find corporate VCs that invest in AI startups with recent IPO exits",
 
-            # Geographic + stage query
-            "Late-stage growth investors in Southeast Asia with 10M+ tickets"
-        ]
+        # Geographic + stage query
+        "Late-stage growth investors in Southeast Asia with 10M+ tickets"
+    ]
 
-        for i, query in enumerate(test_queries, 1):
-            print(f"\n{'='*60}")
-            print(f"TEST {i}")
-            print(f"{'='*60}")
+    for i, query in enumerate(test_queries, 1):
+        print(f"\n{'='*60}")
+        print(f"TEST {i}")
+        print(f"{'='*60}")
 
-            result = service.parse_investor_query(query)
-            print(f"\n📊 RESULT:")
-            print(json.dumps(result, indent=2))
+        result = service.parse_investor_query(query)
+        print(f"\n📊 RESULT:")
+        print(json.dumps(result, indent=2))
 
-            print(f"\n🎯 EXTRACTED FIELDS: {', '.join(result.get('_metadata', {}).get('extraction_schema', []))}")
+        print(f"\n🎯 EXTRACTED FIELDS: {', '.join(result.get('_metadata', {}).get('extraction_schema', []))}")
