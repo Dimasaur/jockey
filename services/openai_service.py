@@ -74,7 +74,34 @@ class OpenAIService:
         """ Main parsing function with dynamic extraction"""
 
         # Step 1: Detect what's in the query
-        pass
+        print(f"🔍 Analyzing query: {query[:50]}...")
+        components = self._detect_query_components(query)
+        print(f"📋 Detected components: {components}")
+
+        # Step 2: Build dynamic schema
+        schema = self._build_dynamic_schema(components)
+
+        # Step 3: Create dynamic extraction prompt
+        schema_description = "\n".join([f"- {field}: {desc}" for field, desc in schema.items()])
+
+        extraction_prompt = f"""
+        Extract the following information from the user query and return as JSON:
+
+        {schema_description}
+
+        Rules:
+        - Only include fields that have actual values from the query
+        - Use null for fields mentioned but without specific values
+        - For ticket_size, convert amounts to numbers (e.g. "5-10M" = {{"min":5000000, "max":10000000}})
+        - Return valid JSON only, no explanatons
+
+
+        Example format:
+        {{
+            "industry":"automotive",
+            "location":"Germany
+        }}
+        """
 
     # Test the function
     if __name__ == "__main__":
