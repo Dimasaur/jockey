@@ -9,7 +9,7 @@ class OpenAIService:
     def __init__(self):
         self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-    def _detect_query_components(self, query: str) -> List[str]:
+    def _detect_query_components(self, query: str) -> list[str]:
         """First pass: detect what components are mentioned in the query"""
 
         detection_prompt = """
@@ -50,7 +50,7 @@ class OpenAIService:
             return ["industry","location"] # fallback
 
 
-    def _build_dynamic_schema(self, components: List[str]) -> Dict[str, str]:
+    def _build_dynamic_schema(self, components: list[str]) -> dict[str, str]:
         """Build extraction schema based on detected components"""
 
         schema_mapping = {
@@ -70,7 +70,7 @@ class OpenAIService:
         return {comp: schema_mapping[comp] for comp in components if comp in schema_mapping}
 
 
-    def parse_investor_query(self, query: str) -> Dict[str, any]:
+    def parse_investor_query(self, query: str) -> dict[str, any]:
         """ Main parsing function with dynamic extraction"""
 
         # Step 1: Detect what's in the query
@@ -103,9 +103,65 @@ class OpenAIService:
         }}
         """
 
-    # Test the function
+        try:
+            response = self.client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role":"system","content":extraction_prompt},
+                    {"role":"user","content":query}
+                ],
+                max_tokens=400
+            )
+
+            result = json.loads(response.choices[0].message.content)
+
+            # Add metadata about what was extracted
+            result["_metadata"] = {
+                "detected_components":components,
+                "extraction_schema": list(schema.keys()),
+                "query_complexity": len(components)
+            }
+
+            return result
+
+        except Exception as e:
+            print(f"❌ Extraction error: {e}")
+            return {
+                "error":str(e),
+                "_metadata": {
+                    "detected_components": components,
+                    "query":query
+                }
+            }
+
+    # Test with various query types
     if __name__ == "__main__":
         service = OpenAIService()
-        test_query = "Generate a list of investors that invest in automotive space in Germany, I just need companies names, website and LinkedIn URL. Take investors from Project ENIGMA and add additional investors from Apollo. that do tickets between 5-10 million and have a dry powder available."
-        result = service.parse_investor_query(test_query)
-        print(json.dumps(result, indent=2))
+
+        test_queries = [
+            # Simple query
+            "Find automotive investors in Germany",
+
+            # Complex query with multiple components
+            "Generate Series A fintech investors in London with 2-5M tickets who have dry powder and focus on B2B SaaS, create Project LONDON-FINTECH",
+
+            # Project-focused query
+            "Get warm leads from Project ENIGMA and add healthcare VCs in California",
+
+            # Investment-focused query
+            "Find corporate VCs that invest in AI startups with recent IPO exits",
+
+            # Geographic + stage query
+            "Late-stage growth investors in Southeast Asia with 10M+ tickets"
+        ]
+
+        for i, query in enumerate(test_queries, 1):
+            print(f"\n{'='*60}")
+            print(f"TEST {i}")
+            print(f"{'='*60}")
+
+            result = service.parse_investor_query(query)
+            print(f"\n📊 RESULT:")
+            print(json.dumps(result, indent=2))
+
+            print(f"\n🎯 EXTRACTED FIELDS: {', '.join(result.get('_metadata', {}).get('extraction_schema', []))}")
