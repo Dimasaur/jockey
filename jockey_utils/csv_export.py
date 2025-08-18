@@ -5,10 +5,6 @@ from typing import List
 
 from models.schemas import Investor
 
-# Avoid accidental name collision with other 'utils' in Python path by
-# providing an alternate import path name used by the orchestrator.
-# Do not move this file; we just expose a stable alias via package name below.
-
 
 def export_investors_to_csv(investors: List[Investor], directory: str = "./exports") -> str:
     os.makedirs(directory, exist_ok=True)
