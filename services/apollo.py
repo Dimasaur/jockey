@@ -50,7 +50,9 @@ class ApolloService:
         # Endpoint overrideable via APOLLO_ORG_SEARCH_URL
         org_search_url = os.getenv("APOLLO_ORG_SEARCH_URL", f"{self.base_url}/organizations/search")
         try:
+            # Prefer X-Api-Key (works per Apollo examples); keep Bearer for compatibility
             headers = {
+                "X-Api-Key": self.api_key,
                 "Authorization": f"Bearer {self.api_key}",
                 "Content-Type": "application/json",
             }
