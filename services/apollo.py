@@ -14,26 +14,119 @@ class ApolloService:
     def __init__(self) -> None:
         self.api_key: Optional[str] = os.getenv("APOLLO_API_KEY")
         self.base_url: str = os.getenv("APOLLO_BASE_URL", "https://api.apollo.io/v1")
+        self.enable_mock: bool = os.getenv("APOLLO_ENABLE_MOCK", "0") in {"1", "true", "True"}
 
     def search_investors(self, query: ParsedQuery, max_results: int = 50) -> List[Investor]:
-        if not self.api_key:
-            # Fallback mock: return empty list when not configured
-            return []
+        # Mock mode to enable end-to-end testing without a real Apollo integration
+        if self.enable_mock or not self.api_key:
+            count = max(1, min(max_results, 10))
+            industry = (query.industry or "General").title()
+            location = (query.location or "Global").title()
+            prefix = f"{industry} Capital {location}"
+            ticket_min = query.ticket_size.minimum if query.ticket_size else None
+            ticket_max = query.ticket_size.maximum if query.ticket_size else None
 
-        # NOTE: Apollo.io investor search specifics are omitted; this is a placeholder.
-        # If you have a specific endpoint, replace this with the correct API call.
+            mocked: List[Investor] = []
+            for i in range(1, count + 1):
+                slug = f"{industry}-{location}-vc-{i}".lower().replace(" ", "-")
+                mocked.append(
+                    Investor(
+                        id=f"mock-apollo-{slug}",
+                        name=f"{prefix} #{i}",
+                        website=f"https://{slug}.com",
+                        linkedin_url=f"https://www.linkedin.com/company/{slug}",
+                        investor_type="VC",
+                        industry_focus=query.industry,
+                        location=query.location,
+                        ticket_min=ticket_min,
+                        ticket_max=ticket_max,
+                        is_warm_lead=False,
+                        source="apollo",
+                    )
+                )
+            return mocked
+
+        # Real call: try Apollo Organizations Search API
+        # Endpoint overrideable via APOLLO_ORG_SEARCH_URL
+        org_search_url = os.getenv("APOLLO_ORG_SEARCH_URL", f"{self.base_url}/organizations/search")
         try:
             headers = {
                 "Authorization": f"Bearer {self.api_key}",
                 "Content-Type": "application/json",
             }
 
-            # Placeholder: ping health or some lightweight endpoint
-            health_url = f"{self.base_url}/auth/health"
-            resp = requests.get(health_url, headers=headers, timeout=15)
-            resp.raise_for_status()
+            industries: Optional[List[str]] = [query.industry] if query.industry else None
+            locations: Optional[List[str]] = [query.location] if query.location else None
 
-            # Without a real endpoint, return an empty list for now
-            return []
+            # Build a permissive keyword search to bias towards investors (VC firms)
+            keyword_tokens: List[str] = [
+                "capital",
+                "ventures",
+                "partners",
+                "vc",
+                "investment",
+                "investments",
+                "equity",
+            ]
+            if query.industry:
+                keyword_tokens.append(query.industry)
+            if query.investor_type:
+                keyword_tokens.append(query.investor_type)
+            q_keywords = " ".join(keyword_tokens)
+
+            payload = {
+                "page": 1,
+                "per_page": max(1, min(max_results, 25)),
+                # Many Apollo endpoints accept flexible fields; unknown ones are ignored
+                # Include common filters if supported by your plan
+                "q_organization_keywords": q_keywords,
+            }
+            if industries:
+                payload["industries"] = industries
+            if locations:
+                payload["locations"] = locations
+
+            resp = requests.post(org_search_url, headers=headers, json=payload, timeout=30)
+            resp.raise_for_status()
+            data = resp.json()
+
+            # Response may contain 'organizations' or 'companies'
+            orgs = data.get("organizations") or data.get("companies") or []
+            results: List[Investor] = []
+            for org in orgs:
+                name = org.get("name") or org.get("organization_name") or ""
+                if not name:
+                    continue
+                website = (
+                    org.get("website_url")
+                    or org.get("website")
+                    or (f"https://{org.get('primary_domain')}" if org.get("primary_domain") else None)
+                )
+                linkedin = org.get("linkedin_url") or org.get("linkedin")
+                ind = None
+                if isinstance(org.get("industries"), list) and org.get("industries"):
+                    ind = ", ".join(org.get("industries"))
+                elif isinstance(org.get("industry"), str):
+                    ind = org.get("industry")
+                loc = org.get("primary_location") or org.get("location")
+
+                results.append(
+                    Investor(
+                        id=str(org.get("id") or org.get("_id") or org.get("uuid") or name),
+                        name=name,
+                        website=website,
+                        linkedin_url=linkedin,
+                        investor_type="VC",
+                        industry_focus=ind or query.industry,
+                        location=loc or query.location,
+                        ticket_min=query.ticket_size.minimum if query.ticket_size else None,
+                        ticket_max=query.ticket_size.maximum if query.ticket_size else None,
+                        is_warm_lead=False,
+                        source="apollo",
+                    )
+                )
+
+            return results
         except Exception:
+            # On any error, return empty to avoid breaking the overall flow
             return []
