@@ -1,3 +1,11 @@
+"""
+Gmail service (drafting only)
+
+Generates a plain-text email draft summarizing the investor results and
+proposing available meeting slots. This does not send email; it returns an
+EmailDraft object for display or further editing.
+"""
+
 from typing import List, Optional
 
 from jinja2 import Template
@@ -6,7 +14,19 @@ from models.schemas import AvailabilitySlot, EmailDraft, Investor, ParsedQuery
 
 
 class GmailService:
+    """Create email drafts summarizing results and availability."""
+
     def draft_email(self, investors: List[Investor], availability: Optional[List[AvailabilitySlot]], parsed: Optional[ParsedQuery]) -> EmailDraft:
+        """Build a simple text email draft.
+
+        Args:
+            investors: Final investor list (top 5 previewed in the body).
+            availability: Optional list of time slots to propose.
+            parsed: Parsed query context to personalize industry/location.
+
+        Returns:
+            EmailDraft: subject and body_text populated (no HTML send).
+        """
         subject = "Investor list and next steps"
         slots_text = ""
         if availability:
