@@ -1,9 +1,19 @@
+# Environment & Credentials
 .env
-.DS_Store
+google_credentials.json
+token.pickle
+
+# Generated results
+exports/
+runs/
+*.json
+*.csv
+
+# Python
 __pycache__/
 *.pyc
 venv/
+
+# IDE
+.DS_Store
 .cursorrules
-google_credentials.json
-token.pickle
-runs/
