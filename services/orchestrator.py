@@ -21,7 +21,7 @@ from services.apollo import ApolloService
 from services.gmail import GmailService
 from services.google_calendar import GoogleCalendarService
 from services.openai_service import OpenAIService
-from jockey_utils.csv_export import export_investors_to_csv
+from utils.csv_export import export_investors_to_csv
 
 
 def _now_iso() -> str:
