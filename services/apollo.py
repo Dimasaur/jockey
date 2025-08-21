@@ -24,6 +24,8 @@ from dotenv import load_dotenv
 
 from models.schemas import Investor, ParsedQuery
 
+import logging
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
@@ -34,6 +36,7 @@ class ApolloService:
         self.api_key: Optional[str] = os.getenv("APOLLO_API_KEY")
         self.base_url: str = os.getenv("APOLLO_BASE_URL", "https://api.apollo.io/v1")
         self.enable_mock: bool = os.getenv("APOLLO_ENABLE_MOCK", "0") in {"1", "true", "True"}
+
 
     def search_investors(self, query: ParsedQuery, max_results: int = 50) -> List[Investor]:
         """Search Apollo for likely investor organizations based on a parsed query.
@@ -76,15 +79,11 @@ class ApolloService:
         # Endpoint is overrideable via APOLLO_ORG_SEARCH_URL
         org_search_url = os.getenv("APOLLO_ORG_SEARCH_URL", f"{self.base_url}/organizations/search")
         try:
-            # Prefer X-Api-Key (works per Apollo examples); keep Bearer for compatibility
+            # Use only X-Api-Key header (sending both X-Api-Key and Authorization causes 401 errors)
             headers = {
                 "X-Api-Key": self.api_key,
-                "Authorization": f"Bearer {self.api_key}",
                 "Content-Type": "application/json",
             }
-
-            industries: Optional[List[str]] = [query.industry] if query.industry else None
-            locations: Optional[List[str]] = [query.location] if query.location else None
 
             # Build a permissive keyword search to bias towards investors (VC firms)
             keyword_tokens: List[str] = [
@@ -102,6 +101,9 @@ class ApolloService:
                 keyword_tokens.append(query.investor_type)
             q_keywords = " ".join(keyword_tokens)
 
+            industries: Optional[List[str]] = [query.industry] if query.industry else None
+            locations: Optional[List[str]] = [query.location] if query.location else None
+
             payload = {
                 "page": 1,
                 "per_page": max(1, min(max_results, 25)),
@@ -115,8 +117,13 @@ class ApolloService:
                 payload["locations"] = locations
 
             resp = requests.post(org_search_url, headers=headers, json=payload, timeout=30)
-            resp.raise_for_status()
+
+            if resp.status_code != 200:
+                logger.error(f"Apollo API error: {resp.status_code} - {resp.text}")
+                return []
+
             data = resp.json()
+            logger.info(f"Apollo API response: {len(data.get('organizations', []))} organizations found")
 
             # Response may contain 'organizations' or 'companies'
             orgs = data.get("organizations") or data.get("companies") or []
@@ -155,6 +162,7 @@ class ApolloService:
                 )
 
             return results
-        except Exception:
+        except Exception as e:
             # On any error, return empty to avoid breaking the overall flow
+            logger.error(f"Apollo API error: {e}")
             return []
