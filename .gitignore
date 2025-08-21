@@ -6,3 +6,4 @@ venv/
 .cursorrules
 google_credentials.json
 token.pickle
+runs/
