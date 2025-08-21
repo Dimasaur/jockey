@@ -1,3 +1,18 @@
+"""
+Airtable service wrapper
+
+Responsibilities:
+- Connect to Airtable base/tables using environment config
+- Read investors for a given project
+- Create a new project record (optional step in workflow)
+
+Environment variables:
+- AIRTABLE_API_KEY
+- AIRTABLE_BASE_ID
+- AIRTABLE_TABLE_INVESTORS (default: "Investors")
+- AIRTABLE_TABLE_PROJECTS (default: "Projects")
+"""
+
 import os
 from typing import List, Optional
 
@@ -11,6 +26,7 @@ load_dotenv()
 
 
 class AirtableService:
+    """Thin wrapper around pyairtable for project/investor operations."""
     def __init__(self) -> None:
         self.api_key: Optional[str] = os.getenv("AIRTABLE_API_KEY")
         self.base_id: Optional[str] = os.getenv("AIRTABLE_BASE_ID")
@@ -25,6 +41,12 @@ class AirtableService:
                 self.client = None
 
     def get_investors_from_project(self, project_name: Optional[str]) -> List[Investor]:
+        """Return investors linked to a given project name.
+
+        Expects an "Investors" table with fields roughly matching:
+        Name, Website, LinkedIn, Type, Industry, Location, TicketMin, TicketMax,
+        WarmLead (checkbox), Project (text/link).
+        """
         if not project_name:
             return []
 
@@ -34,7 +56,7 @@ class AirtableService:
 
         try:
             table = self.client.table(self.base_id, self.table_investors)
-            # Basic filter example; adapt to actual schema as needed
+            # Basic filter example; adapt to your Airtable schema as needed
             formula = f"{{Project}} = '{project_name}'"
             records = table.all(formula=formula)
             investors: List[Investor] = []
@@ -60,6 +82,7 @@ class AirtableService:
             return []
 
     def create_project(self, project_name: str, investors: List[Investor]) -> Optional[str]:
+        """Create a new project row and return its Airtable record id."""
         if not (self.client and self.base_id):
             return None
         try:
