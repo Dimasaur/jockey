@@ -1,3 +1,13 @@
+"""
+OpenAI service for natural language query parsing
+
+Uses a two-step approach:
+1) Component detection: identify what fields are mentioned in the query
+2) Dynamic extraction: build a schema and extract values for detected fields
+
+This allows flexible parsing without hardcoding field expectations.
+"""
+
 import os
 import json
 from openai import OpenAI
@@ -6,6 +16,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class OpenAIService:
+    """Parse natural language investor queries into structured data."""
+
     def __init__(self):
         self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
