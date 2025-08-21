@@ -1,3 +1,20 @@
+"""
+API connectivity test suite
+
+This module tests connectivity and basic functionality for all external APIs
+used by the Jockey AI investor research workflow.
+
+Tests:
+- OpenAI API: basic chat completion
+- Airtable API: base access and table listing
+- Apollo.io API: health endpoint
+- Gmail API: profile access (requires OAuth setup)
+- Google Calendar API: calendar listing (requires OAuth setup)
+
+Usage:
+    python test_apis.py
+"""
+
 import os
 from dotenv import load_dotenv
 
@@ -5,7 +22,14 @@ from dotenv import load_dotenv
 load_dotenv()
 
 def check_env_vars():
-    """Check for required environment variables and provide guidance"""
+    """Check for required environment variables and provide guidance.
+
+    Validates that all required API keys are present in the .env file
+    and provides helpful links for obtaining missing credentials.
+
+    Returns:
+        bool: True if all required vars are present, False otherwise
+    """
     required_vars = {
         'OPENAI_API_KEY': 'Get from https://platform.openai.com/api-keys',
         'AIRTABLE_API_KEY': 'Get from https://airtable.com/account',
@@ -27,7 +51,14 @@ def check_env_vars():
     return True
 
 def test_openai():
-    """Test OpenAI API connectivity and basic functionality"""
+    """Test OpenAI API connectivity and basic functionality.
+
+    Attempts a simple chat completion to verify the API key is valid
+    and the service is accessible.
+
+    Returns:
+        bool: True if test passes, False otherwise
+    """
     try:
         from openai import OpenAI
         client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
@@ -45,7 +76,14 @@ def test_openai():
         return False
 
 def test_airtable():
-    """Test Airtable API connectivity and basic functionality"""
+    """Test Airtable API connectivity and basic functionality.
+
+    Verifies API key and base ID are valid by attempting to list
+    tables in the specified base.
+
+    Returns:
+        bool: True if test passes, False otherwise
+    """
     try:
         from pyairtable import Api
         api_key = os.getenv('AIRTABLE_API_KEY')
@@ -74,7 +112,14 @@ def test_airtable():
         return False
 
 def test_apollo():
-    """Test Apollo.io API connectivity and basic functionality"""
+    """Test Apollo.io API connectivity and basic functionality.
+
+    Tests the health endpoint to verify API key is valid and
+    the service is accessible.
+
+    Returns:
+        bool: True if test passes, False otherwise
+    """
     try:
         import requests
         api_key = os.getenv('APOLLO_API_KEY')
@@ -84,8 +129,9 @@ def test_apollo():
             print("   Add: APOLLO_API_KEY=your_api_key_here")
             return False
 
-        # Test basic API connectivity
+        # Test basic API connectivity using same auth as the service
         headers = {
+            'X-Api-Key': api_key,
             'Authorization': f'Bearer {api_key}',
             'Content-Type': 'application/json'
         }
@@ -102,7 +148,14 @@ def test_apollo():
         return False
 
 def test_gmail():
-    """Test Gmail API connectivity and basic functionality"""
+    """Test Gmail API connectivity and basic functionality.
+
+    Requires OAuth setup via setup_google_oauth.py. Tests by accessing
+    the user's Gmail profile to verify credentials are valid.
+
+    Returns:
+        bool: True if test passes, False otherwise
+    """
     try:
         from google.oauth2.credentials import Credentials
         from googleapiclient.discovery import build
@@ -140,7 +193,14 @@ def test_gmail():
         return False
 
 def test_google_calendar():
-    """Test Google Calendar API connectivity and basic functionality"""
+    """Test Google Calendar API connectivity and basic functionality.
+
+    Requires OAuth setup via setup_google_oauth.py. Tests by listing
+    available calendars to verify credentials are valid.
+
+    Returns:
+        bool: True if test passes, False otherwise
+    """
     try:
         from google.oauth2.credentials import Credentials
         from googleapiclient.discovery import build
@@ -178,7 +238,14 @@ def test_google_calendar():
         return False
 
 def test_all_apis():
-    """Run all API tests and provide summary"""
+    """Run all API tests and provide summary.
+
+    Executes connectivity tests for all external APIs and provides
+    a summary of working vs failed APIs with troubleshooting guidance.
+
+    Returns:
+        bool: True if all APIs work, False if any fail
+    """
     print("🔍 Testing all APIs...\n")
 
     # Check environment variables first
@@ -219,4 +286,5 @@ def test_all_apis():
     return all(results.values())
 
 if __name__ == "__main__":
+    """Main entry point: run all API connectivity tests."""
     test_all_apis()

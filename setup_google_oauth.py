@@ -1,7 +1,16 @@
 #!/usr/bin/env python3
 """
 Google OAuth Setup Script
-This script helps you set up OAuth authentication for Google services (Gmail, Calendar)
+
+This script helps you set up OAuth authentication for Google services (Gmail, Calendar).
+It handles the OAuth flow, token refresh, and credential persistence.
+
+Prerequisites:
+- credentials.json file from Google Cloud Console
+- Gmail API and Google Calendar API enabled in your project
+
+Output:
+- token.pickle file with persistent credentials
 """
 
 import os
@@ -17,7 +26,21 @@ SCOPES = [
 ]
 
 def setup_google_oauth():
-    """Set up Google OAuth authentication"""
+    """Set up Google OAuth authentication for Gmail and Calendar access.
+
+    This function:
+    1. Checks for existing valid credentials in token.pickle
+    2. Refreshes expired tokens if possible
+    3. Initiates OAuth flow if no valid credentials exist
+    4. Saves credentials to token.pickle for future use
+
+    Returns:
+        bool: True if setup successful, False if credentials.json missing
+
+    Raises:
+        FileNotFoundError: If credentials.json is not present
+        OAuthError: If OAuth flow fails
+    """
     creds = None
 
     # The file token.pickle stores the user's access and refresh tokens.
