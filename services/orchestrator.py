@@ -1,3 +1,18 @@
+"""
+Orchestrator service
+
+Coordinates the end-to-end investor research workflow:
+1) Parse natural language query (OpenAI)
+2) Fetch existing investors (Airtable)
+3) Fetch external investors (Apollo)
+4) Merge, de-duplicate, and filter results
+5) Export CSV
+6) Draft email with calendar availability
+7) Optionally create Airtable project (non-dry-run)
+
+Runs are persisted as JSON files in ./runs so they can be polled via API.
+"""
+
 import json
 import os
 import uuid
@@ -25,10 +40,16 @@ from utils.csv_export import export_investors_to_csv
 
 
 def _now_iso() -> str:
+    """Return current UTC time in ISO 8601 format with trailing Z."""
     return datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
 
 
 class Orchestrator:
+    """High-level coordinator for the investor workflow.
+
+    Responsible for step sequencing, basic error handling, and simple run
+    persistence on disk. Individual API specifics live in their services.
+    """
     def __init__(self) -> None:
         self.openai_service = OpenAIService()
         self.airtable_service = AirtableService()
@@ -41,13 +62,18 @@ class Orchestrator:
 
     # -------------------- Run store helpers --------------------
     def _run_path(self, run_id: str) -> str:
+        """Build absolute path for a run's JSON record."""
         return os.path.join(self.runs_dir, f"{run_id}.json")
 
     def _save_run(self, run: OrchestrateRun) -> None:
+        """Persist run state atomically to disk.
+        Either the entire save operation succeeds or it fails completely
+        No partial / corrupted saves. Prevents data corruption"""
         with open(self._run_path(run.run_id), "w", encoding="utf-8") as f:
             json.dump(run.model_dump(), f, indent=2)
 
     def _load_run(self, run_id: str) -> Optional[OrchestrateRun]:
+        """Load a run by id if present; return None when missing."""
         path = self._run_path(run_id)
         if not os.path.exists(path):
             return None
@@ -57,6 +83,7 @@ class Orchestrator:
 
     # -------------------- Core orchestration --------------------
     def _new_run(self) -> OrchestrateRun:
+        """Create a new run with pending status and persist it."""
         run = OrchestrateRun(
             run_id=str(uuid.uuid4()),
             status=RunStatus.pending,
@@ -68,12 +95,14 @@ class Orchestrator:
         return run
 
     def _mark_step(self, run: OrchestrateRun, step: str, status: RunStatus) -> None:
+        """Update a specific step's status and persist the run."""
         run.steps[step] = status
         run.updated_at_iso = _now_iso()
         self._save_run(run)
 
     def _to_parsed_query(self, parsed_raw: dict) -> ParsedQuery:
-        # Map OpenAI extraction schema to ParsedQuery model
+        """Map OpenAI extraction payload to the internal ParsedQuery model."""
+        # Normalize ticket size to our schema shape
         ticket_raw = parsed_raw.get("ticket_size") or {}
         ticket = None
         if isinstance(ticket_raw, dict):
@@ -100,6 +129,7 @@ class Orchestrator:
         return pq
 
     def _merge_and_dedupe(self, airtable_investors: List[Investor], apollo_investors: List[Investor]) -> List[Investor]:
+        """Merge and remove duplicates using a stable key (website/LinkedIn/name)."""
         merged: List[Investor] = []
         seen: Dict[str, str] = {}
 
@@ -117,6 +147,11 @@ class Orchestrator:
         return merged
 
     def orchestrate(self, request: OrchestrateRequest) -> OrchestrateResponse:
+        """Execute the full workflow and return an API-friendly response.
+
+        This method is intentionally linear for clarity; concurrency and retries
+        can be added around the independent steps if/when needed.
+        """
         run = self._new_run()
         run.status = RunStatus.running
         self._save_run(run)
@@ -209,4 +244,5 @@ class Orchestrator:
 
     # -------------------- Public helpers --------------------
     def get_run(self, run_id: str) -> Optional[OrchestrateRun]:
+        """Public helper to load a persisted run by id."""
         return self._load_run(run_id)
