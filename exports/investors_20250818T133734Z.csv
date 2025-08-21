@@ -1,6 +1,0 @@
-id,name,website,linkedin_url,investor_type,industry_focus,location,ticket_min,ticket_max,is_warm_lead,source
-mock-apollo-general-global-vc-1,General Capital Global #1,https://general-global-vc-1.com,https://www.linkedin.com/company/general-global-vc-1,VC,,,,,False,apollo
-mock-apollo-general-global-vc-2,General Capital Global #2,https://general-global-vc-2.com,https://www.linkedin.com/company/general-global-vc-2,VC,,,,,False,apollo
-mock-apollo-general-global-vc-3,General Capital Global #3,https://general-global-vc-3.com,https://www.linkedin.com/company/general-global-vc-3,VC,,,,,False,apollo
-mock-apollo-general-global-vc-4,General Capital Global #4,https://general-global-vc-4.com,https://www.linkedin.com/company/general-global-vc-4,VC,,,,,False,apollo
-mock-apollo-general-global-vc-5,General Capital Global #5,https://general-global-vc-5.com,https://www.linkedin.com/company/general-global-vc-5,VC,,,,,False,apollo
