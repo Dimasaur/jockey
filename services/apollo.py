@@ -1,3 +1,21 @@
+"""
+Apollo service wrapper
+
+Responsibilities:
+- Search for organizations (investor firms) via Apollo's API
+- Map Apollo response fields to our Investor model
+- Support a deterministic mock mode for offline/dev testing
+
+Authentication:
+- Prefers `X-Api-Key: <APOLLO_API_KEY>`; also sends `Authorization: Bearer <APOLLO_API_KEY>`
+
+Configuration (env):
+- APOLLO_API_KEY               : API key
+- APOLLO_ENABLE_MOCK          : "1"/"true" to return generated mock data
+- APOLLO_BASE_URL             : default "https://api.apollo.io/v1"
+- APOLLO_ORG_SEARCH_URL       : override organizations search endpoint
+"""
+
 import os
 from typing import List, Optional
 
@@ -11,12 +29,20 @@ load_dotenv()
 
 
 class ApolloService:
+    """Client for Apollo organizations search (investor firms)."""
     def __init__(self) -> None:
         self.api_key: Optional[str] = os.getenv("APOLLO_API_KEY")
         self.base_url: str = os.getenv("APOLLO_BASE_URL", "https://api.apollo.io/v1")
         self.enable_mock: bool = os.getenv("APOLLO_ENABLE_MOCK", "0") in {"1", "true", "True"}
 
     def search_investors(self, query: ParsedQuery, max_results: int = 50) -> List[Investor]:
+        """Search Apollo for likely investor organizations based on a parsed query.
+
+        - Uses keyword bias (capital/ventures/vc/partners) to target firms
+        - Applies industry/location if provided
+        - Returns a list of Investor models (subset of fields)
+        - In mock mode (or missing API key), generates deterministic sample firms
+        """
         # Mock mode to enable end-to-end testing without a real Apollo integration
         if self.enable_mock or not self.api_key:
             count = max(1, min(max_results, 10))
@@ -46,8 +72,8 @@ class ApolloService:
                 )
             return mocked
 
-        # Real call: try Apollo Organizations Search API
-        # Endpoint overrideable via APOLLO_ORG_SEARCH_URL
+        # Real call: Apollo Organizations Search API (subject to plan/permissions)
+        # Endpoint is overrideable via APOLLO_ORG_SEARCH_URL
         org_search_url = os.getenv("APOLLO_ORG_SEARCH_URL", f"{self.base_url}/organizations/search")
         try:
             # Prefer X-Api-Key (works per Apollo examples); keep Bearer for compatibility
