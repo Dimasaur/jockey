@@ -137,7 +137,16 @@ class ApolloService:
                 return []
 
             data = resp.json()
-            logger.info(f"Apollo API response: {len(data.get('organizations', []))} organizations found")
+            orgs = data.get("organizations") or data.get("companies") or []
+            logger.info(f"Apollo API response: {len(orgs)} organizations found")
+
+            # Log the first few organizations for debugging
+            for i, org in enumerate(orgs[:3]):
+                name = org.get("name", "Unknown")
+                industries = org.get("industries", [])
+                if isinstance(org.get("industry"), str):
+                    industries = [org.get("industry")]
+                logger.info(f"Sample org {i+1}: {name} - Industries: {industries}")
 
             # Response may contain 'organizations' or 'companies'
             orgs = data.get("organizations") or data.get("companies") or []
@@ -146,18 +155,40 @@ class ApolloService:
                 name = org.get("name") or org.get("organization_name") or ""
                 if not name:
                     continue
+
+                # Extract industry information
+                org_industries = []
+                if isinstance(org.get("industries"), list):
+                    org_industries = org.get("industries", [])
+                elif isinstance(org.get("industry"), str):
+                    org_industries = [org.get("industry")]
+
+                # Filter: Only include companies that are actually in Venture Capital & Private Equity
+                # or if no specific industry filter is requested (flexible search)
+                is_vc_pe = any(
+                    industry.lower() in ["venture capital & private equity", "venture capital", "private equity"]
+                    for industry in org_industries
+                )
+
+                logger.info(f"Processing {name}: industries={org_industries}, is_vc_pe={is_vc_pe}, query.investor_type={query.investor_type}")
+
+                # If query specifically asks for VCs, only include VC/PE companies
+                if query.investor_type and query.investor_type.lower() in ["vc", "venture capital"]:
+                    if not is_vc_pe:
+                        logger.info(f"Skipping {name} - not a VC/PE company (industries: {org_industries})")
+                        continue
+
                 website = (
                     org.get("website_url")
                     or org.get("website")
                     or (f"https://{org.get('primary_domain')}" if org.get("primary_domain") else None)
                 )
                 linkedin = org.get("linkedin_url") or org.get("linkedin")
-                ind = None
-                if isinstance(org.get("industries"), list) and org.get("industries"):
-                    ind = ", ".join(org.get("industries"))
-                elif isinstance(org.get("industry"), str):
-                    ind = org.get("industry")
+                ind = ", ".join(org_industries) if org_industries else query.industry
                 loc = org.get("primary_location") or org.get("location")
+
+                # Determine investor type based on actual industry
+                investor_type = "VC" if is_vc_pe else "Unknown"
 
                 results.append(
                     Investor(
@@ -165,8 +196,8 @@ class ApolloService:
                         name=name,
                         website=website,
                         linkedin_url=linkedin,
-                        investor_type="VC",
-                        industry_focus=ind or query.industry,
+                        investor_type=investor_type,
+                        industry_focus=ind,
                         location=loc or query.location,
                         ticket_min=query.ticket_size.minimum if query.ticket_size else None,
                         ticket_max=query.ticket_size.maximum if query.ticket_size else None,
@@ -175,6 +206,7 @@ class ApolloService:
                     )
                 )
 
+            logger.info(f"Apollo filtering: {len(orgs)} total organizations, {len(results)} passed VC/PE filter")
             return results
         except Exception as e:
             # On any error, return empty to avoid breaking the overall flow
