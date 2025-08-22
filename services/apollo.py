@@ -101,7 +101,21 @@ class ApolloService:
                 keyword_tokens.append(query.investor_type)
             q_keywords = " ".join(keyword_tokens)
 
-            industries: Optional[List[str]] = [query.industry] if query.industry else None
+            # Map our industry values to Apollo's industry classifications
+            industry_mapping = {
+                "venture capital": "Venture Capital & Private Equity",
+                "vc": "Venture Capital & Private Equity",
+                "private equity": "Venture Capital & Private Equity",
+                "pe": "Venture Capital & Private Equity",
+                "fintech": "Financial Services",
+                "healthcare": "Healthcare",
+                "automotive": "Automotive",
+                "technology": "Information Technology & Services",
+            }
+
+            # Use mapped industry or original if no mapping exists
+            apollo_industry = industry_mapping.get(query.industry.lower()) if query.industry else None
+            industries: Optional[List[str]] = [apollo_industry] if apollo_industry else None
             locations: Optional[List[str]] = [query.location] if query.location else None
 
             payload = {
