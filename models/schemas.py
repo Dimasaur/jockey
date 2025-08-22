@@ -35,6 +35,36 @@ class TicketSize(BaseModel):
     maximum: Optional[float] = Field(None, description="Maximum ticket size in USD")
 
 
+class CompanySearchQuery(BaseModel):
+    """Structured representation of a general company search query."""
+    keywords: Optional[str] = None
+    industry: Optional[str] = None
+    industries: Optional[List[str]] = None
+    location: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    country: Optional[str] = None
+    employee_count_min: Optional[int] = None
+    employee_count_max: Optional[int] = None
+    revenue_min: Optional[float] = None
+    revenue_max: Optional[float] = None
+    founded_year_min: Optional[int] = None
+    founded_year_max: Optional[int] = None
+    technologies: Optional[List[str]] = None
+    funding_stage: Optional[str] = None
+    _metadata: Optional[Dict[str, Any]] = None
+
+
+class PersonSearchQuery(BaseModel):
+    """Structured representation of a person/contact search query."""
+    job_title: Optional[str] = None
+    seniority_level: Optional[str] = None
+    department: Optional[str] = None
+    company_name: Optional[str] = None
+    location: Optional[str] = None
+    _metadata: Optional[Dict[str, Any]] = None
+
+
 class ParsedQuery(BaseModel):
     """Structured representation of a natural language investor query.
 
@@ -52,6 +82,45 @@ class ParsedQuery(BaseModel):
     portfolio_focus: Optional[str] = None
     exit_strategy: Optional[str] = None
     _metadata: Optional[Dict[str, Any]] = None
+
+
+class Company(BaseModel):
+    """General company record from Apollo or other sources."""
+    id: Optional[str] = None
+    name: str
+    website: Optional[str] = None
+    linkedin_url: Optional[str] = None
+    description: Optional[str] = None
+    industry: Optional[str] = None
+    industries: Optional[List[str]] = None
+    location: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    country: Optional[str] = None
+    employee_count: Optional[int] = None
+    employee_range: Optional[str] = None
+    revenue: Optional[float] = None
+    revenue_range: Optional[str] = None
+    founded_year: Optional[int] = None
+    technologies: Optional[List[str]] = None
+    funding_stage: Optional[str] = None
+    keywords: Optional[List[str]] = None
+    source: Optional[str] = None
+
+
+class Person(BaseModel):
+    """Person/contact record from Apollo."""
+    id: Optional[str] = None
+    name: str
+    title: Optional[str] = None
+    seniority_level: Optional[str] = None
+    department: Optional[str] = None
+    company_id: Optional[str] = None
+    company_name: Optional[str] = None
+    email: Optional[str] = None
+    linkedin_url: Optional[str] = None
+    location: Optional[str] = None
+    source: Optional[str] = None
 
 
 class Investor(BaseModel):

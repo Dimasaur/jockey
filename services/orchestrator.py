@@ -21,6 +21,7 @@ from typing import Dict, List, Optional
 
 from models.schemas import (
     AvailabilitySlot,
+    Company,
     EmailDraft,
     Investor,
     OrchestrateRequest,
@@ -179,9 +180,31 @@ class Orchestrator:
 
             # Step: fetch_apollo
             self._mark_step(run, "fetch_apollo", RunStatus.running)
-            apollo_investors = self.apollo_service.search_investors(parsed, max_results=request.options.max_results)
-            for inv in apollo_investors:
-                inv.source = inv.source or "apollo"
+            # Convert ParsedQuery to CompanySearchQuery for the new Apollo service
+            from models.schemas import CompanySearchQuery
+            company_query = CompanySearchQuery(
+                keywords=parsed.industry,
+                industry=parsed.industry,
+                location=parsed.location,
+            )
+            apollo_companies = self.apollo_service.search_companies(company_query, max_results=request.options.max_results)
+            # Convert Company objects to Investor objects for backward compatibility
+            apollo_investors = []
+            for company in apollo_companies:
+                investor = Investor(
+                    id=company.id,
+                    name=company.name,
+                    website=company.website,
+                    linkedin_url=company.linkedin_url,
+                    investor_type="Unknown",  # Default since we're not filtering by investor type
+                    industry_focus=company.industry,
+                    location=company.location,
+                    ticket_min=None,  # Not available in general company search
+                    ticket_max=None,  # Not available in general company search
+                    is_warm_lead=False,
+                    source=company.source or "apollo",
+                )
+                apollo_investors.append(investor)
             self._mark_step(run, "fetch_apollo", RunStatus.succeeded)
 
             # Step: merge_filter
