@@ -66,7 +66,7 @@ def get_run(run_id: str):
 
 
 @app.post("/search/companies")
-def search_companies(query: CompanySearchQuery, max_results: int = 50):
+def search_companies(query: CompanySearchQuery):
     """Search for companies using Apollo's API.
     
     Supports flexible search criteria including:
@@ -74,6 +74,8 @@ def search_companies(query: CompanySearchQuery, max_results: int = 50):
     - Employee count, revenue, founded year ranges
     - Technologies, funding stage
     """
+    # Use max_results from query, default to 50
+    max_results = query.max_results or 50
     companies = apollo_service.search_companies(query, max_results)
     return {
         "query": query,
@@ -84,13 +86,15 @@ def search_companies(query: CompanySearchQuery, max_results: int = 50):
 
 
 @app.post("/search/people")
-def search_people(query: PersonSearchQuery, max_results: int = 50):
+def search_people(query: PersonSearchQuery):
     """Search for people/contacts using Apollo's API.
     
     Supports search by:
     - Job title, seniority level, department
     - Company name, location
     """
+    # Use max_results from query, default to 50
+    max_results = query.max_results or 50
     people = apollo_service.search_people(query, max_results)
     return {
         "query": query,

@@ -34,7 +34,7 @@ load_dotenv()
 
 class ApolloService:
     """General-purpose Apollo client for company and person search."""
-    
+
     def __init__(self) -> None:
         self.api_key: Optional[str] = os.getenv("APOLLO_API_KEY")
         self.base_url: str = os.getenv("APOLLO_BASE_URL", "https://api.apollo.io/v1")
@@ -42,7 +42,7 @@ class ApolloService:
 
     def search_companies(self, query: CompanySearchQuery, max_results: int = 50) -> List[Company]:
         """Search Apollo for companies based on flexible criteria.
-        
+
         Supports searching by:
         - Keywords (general company search)
         - Industry/industries
@@ -170,7 +170,7 @@ class ApolloService:
                     industries = org.get("industries", [])
                 elif isinstance(org.get("industry"), str):
                     industries = [org.get("industry")]
-                
+
                 industry = ", ".join(industries) if industries else None
 
                 # Extract location info
@@ -227,7 +227,7 @@ class ApolloService:
 
     def search_people(self, query: PersonSearchQuery, max_results: int = 50) -> List[Person]:
         """Search Apollo for people/contacts based on criteria.
-        
+
         Supports searching by:
         - Job title
         - Seniority level
@@ -319,13 +319,13 @@ class ApolloService:
         count = max(1, min(max_results, 10))
         industry = (query.industry or "Technology").title()
         location = (query.location or query.city or query.state or query.country or "Global").title()
-        
+
         mock_companies: List[Company] = []
         for i in range(1, count + 1):
             company_type = "Tech" if "tech" in industry.lower() else "Corp"
             name = f"{industry} {company_type} {location} #{i}"
             slug = f"{industry.lower()}-{company_type.lower()}-{location.lower()}-{i}".replace(" ", "-")
-            
+
             mock_companies.append(
                 Company(
                     id=f"mock-apollo-{slug}",
@@ -346,7 +346,7 @@ class ApolloService:
                     founded_year=2010 + i,
                     technologies=query.technologies or ["Python", "JavaScript", "Cloud"],
                     funding_stage=query.funding_stage or "Series A",
-                    keywords=query.keywords or [industry.lower(), "innovation", "growth"],
+                    keywords=[query.keywords] if query.keywords else [industry.lower(), "innovation", "growth"],
                     source="apollo",
                 )
             )
@@ -358,12 +358,12 @@ class ApolloService:
         title = query.job_title or "Manager"
         department = query.department or "Engineering"
         company = query.company_name or "Tech Corp"
-        
+
         mock_people: List[Person] = []
         for i in range(1, count + 1):
             name = f"John Doe {i}"
             slug = f"john-doe-{i}"
-            
+
             mock_people.append(
                 Person(
                     id=f"mock-apollo-person-{slug}",

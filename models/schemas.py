@@ -52,6 +52,7 @@ class CompanySearchQuery(BaseModel):
     founded_year_max: Optional[int] = None
     technologies: Optional[List[str]] = None
     funding_stage: Optional[str] = None
+    max_results: Optional[int] = 50
     _metadata: Optional[Dict[str, Any]] = None
 
 
@@ -62,6 +63,7 @@ class PersonSearchQuery(BaseModel):
     department: Optional[str] = None
     company_name: Optional[str] = None
     location: Optional[str] = None
+    max_results: Optional[int] = 50
     _metadata: Optional[Dict[str, Any]] = None
 
 
