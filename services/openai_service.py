@@ -31,7 +31,7 @@ class OpenAIService:
         Return ONLY a valid JSON array of component strings. Do not include any explanations or additional text.
 
         Possible components:
-        - "industry" (automotive, fintech, healthcare, etc.)
+        - "industry" (automotive, fintech, healthcare, venture capital, etc.)
         - "location" (geographic focus)
         - "ticket_size" (investment amount/range)
         - "company_stage" (startup, growth, late-stage)
@@ -42,6 +42,11 @@ class OpenAIService:
         - "timeframe" (recent investments, active now)
         - "portfolio_focus" (B2B, B2C, etc.)
         - "exit_strategy" (IPO, acquisition focus)
+
+        IMPORTANT RULES:
+        - If the query mentions "venture capital", "VC", or "venture capitals", include BOTH "industry" AND "investor_type"
+        - "venture capital" is both an industry sector AND an investor type
+        - Be comprehensive - if something could be extracted, include it
 
         Example response: ["industry", "location", "ticket_size", "new_project"]
 
@@ -129,10 +134,17 @@ class OpenAIService:
         - Ensure all strings are properly quoted
         - Ensure all brackets and braces are properly closed
 
+        IMPORTANT EXTRACTION RULES:
+        - If the query mentions "venture capital", "VC", or "venture capitals", set industry="venture capital"
+        - If the query mentions "venture capital", "VC", or "venture capitals", set investor_type="VC"
+        - "venture capital" should be extracted as BOTH industry AND investor_type
+        - For other industries, extract the specific industry mentioned
+
         Example format:
         {{
-            "industry": "automotive",
-            "location": "Germany"
+            "industry": "venture capital",
+            "location": "Netherlands",
+            "investor_type": "VC"
         }}
 
         IMPORTANT: Return ONLY the JSON object, no other text.
