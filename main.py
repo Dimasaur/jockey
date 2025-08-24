@@ -102,3 +102,34 @@ def search_people(query: PersonSearchQuery):
         "total_found": len(people),
         "people": people
     }
+
+
+@app.get("/debug/airtable")
+def debug_airtable():
+    """Debug endpoint to check Airtable connection and data."""
+    from services.airtable import AirtableService
+    airtable = AirtableService()
+
+    if not airtable.client:
+        return {"error": "Airtable client not initialized"}
+
+    try:
+        # Test connection and get table info
+        table = airtable.client.table(airtable.base_id, airtable.table_investors)
+        records = table.all(max_records=5)  # Get first 5 records
+
+        return {
+            "status": "connected",
+            "base_id": airtable.base_id,
+            "table_name": airtable.table_investors,
+            "record_count": len(records),
+            "sample_records": [
+                {
+                    "id": record.get("id"),
+                    "fields": record.get("fields", {})
+                }
+                for record in records
+            ]
+        }
+    except Exception as e:
+        return {"error": str(e)}
