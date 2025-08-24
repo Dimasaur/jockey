@@ -29,7 +29,7 @@ def export_investors_to_csv(investors: List[Investor], directory: str = "./expor
     """
     os.makedirs(directory, exist_ok=True)
     timestamp = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
-    file_path = os.path.join(directory, f"investors_{timestamp}.csv")
+    file_path = os.path.join(directory, f"exports_{timestamp}.csv")
 
     fieldnames = [
         "id",

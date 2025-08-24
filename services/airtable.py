@@ -57,7 +57,8 @@ class AirtableService:
         try:
             table = self.client.table(self.base_id, self.table_investors)
             # Basic filter example; adapt to your Airtable schema as needed
-            formula = f"{{Project}} = '{project_name}'"
+            # Updated to use "Project Tag" field which matches the actual Airtable schema
+            formula = f"{{Project Tag}} = '{project_name}'"
             records = table.all(formula=formula)
             investors: List[Investor] = []
             for r in records:
@@ -65,15 +66,15 @@ class AirtableService:
                 investors.append(
                     Investor(
                         id=r.get("id"),
-                        name=fields.get("Name") or fields.get("Company") or "",
-                        website=fields.get("Website"),
-                        linkedin_url=fields.get("LinkedIn"),
-                        investor_type=fields.get("Type"),
-                        industry_focus=fields.get("Industry"),
-                        location=fields.get("Location"),
-                        ticket_min=fields.get("TicketMin"),
-                        ticket_max=fields.get("TicketMax"),
-                        is_warm_lead=bool(fields.get("WarmLead", False)),
+                        name=fields.get("Company Name") or fields.get("Name") or "",
+                        website=fields.get("URL"),
+                        linkedin_url=fields.get("LN"),
+                        investor_type=fields.get("Strategic/Financial"),
+                        industry_focus=fields.get("Industry/ Sector Focus"),
+                        location=fields.get("HQ"),
+                        ticket_min=None,  # Not available in current schema
+                        ticket_max=None,  # Not available in current schema
+                        is_warm_lead=True,  # All Airtable companies are warm leads
                         source="airtable",
                     )
                 )
