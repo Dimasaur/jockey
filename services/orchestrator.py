@@ -180,7 +180,9 @@ class Orchestrator:
 
             # Step: fetch_apollo (only if we have search criteria beyond source project)
             apollo_investors = []
+            print(f"DEBUG: Checking Apollo conditions - industry: {parsed.industry}, location: {parsed.location}, investor_type: {parsed.investor_type}")
             if parsed.industry or parsed.location or parsed.investor_type:
+                print(f"DEBUG: Apollo conditions met, calling Apollo service")
                 self._mark_step(run, "fetch_apollo", RunStatus.running)
                 # Convert ParsedQuery to CompanySearchQuery for the new Apollo service
                 from models.schemas import CompanySearchQuery
@@ -190,6 +192,7 @@ class Orchestrator:
                     location=parsed.location,
                 )
                 apollo_companies = self.apollo_service.search_companies(company_query, max_results=request.options.max_results)
+                print(f"DEBUG: Apollo returned {len(apollo_companies)} companies")
                 # Convert Company objects to Investor objects for backward compatibility
                 for company in apollo_companies:
                     investor = Investor(
@@ -208,6 +211,7 @@ class Orchestrator:
                     apollo_investors.append(investor)
                 self._mark_step(run, "fetch_apollo", RunStatus.succeeded)
             else:
+                print(f"DEBUG: Apollo conditions NOT met, skipping Apollo service")
                 self._mark_step(run, "fetch_apollo", RunStatus.succeeded)  # Skip Apollo if only source project
 
             # Step: merge_filter
