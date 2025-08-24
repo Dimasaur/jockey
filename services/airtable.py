@@ -58,13 +58,17 @@ class AirtableService:
             table = self.client.table(self.base_id, self.table_investors)
             # Get all records and filter in Python to handle comma-separated project tags
             records = table.all()
+            print(f"DEBUG: Found {len(records)} total records in Airtable")
             # Filter records that contain the project name in their Project Tag
             filtered_records = []
             for record in records:
                 project_tag = record.get("fields", {}).get("Project Tag", "")
+                print(f"DEBUG: Checking record {record.get('fields', {}).get('Company Name', 'Unknown')} with project tag: '{project_tag}'")
                 if project_name in project_tag:
                     filtered_records.append(record)
+                    print(f"DEBUG: Found match for project '{project_name}'")
             records = filtered_records
+            print(f"DEBUG: Filtered to {len(records)} records for project '{project_name}'")
             investors: List[Investor] = []
             for r in records:
                 fields = r.get("fields", {})
