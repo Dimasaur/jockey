@@ -32,9 +32,10 @@ class AirtableService:
         self.base_id: Optional[str] = os.getenv("AIRTABLE_BASE_ID")
         self.table_investors: str = os.getenv("AIRTABLE_TABLE_INVESTORS", "Investors")
         self.table_projects: str = os.getenv("AIRTABLE_TABLE_PROJECTS", "Projects")
+        self.enable_mock: bool = os.getenv("AIRTABLE_ENABLE_MOCK", "0").lower() in ("1", "true", "yes")
 
         self.client: Optional[Api] = None
-        if self.api_key and self.base_id:
+        if self.api_key and self.base_id and not self.enable_mock:
             try:
                 self.client = Api(self.api_key)
             except Exception:
@@ -50,9 +51,9 @@ class AirtableService:
         if not project_name:
             return []
 
-        if not (self.client and self.base_id):
-            # Fallback: no credentials, return empty list
-            return []
+        if self.enable_mock or not (self.client and self.base_id):
+            # Return mock data for testing
+            return self._generate_mock_investors(project_name)
 
         try:
             table = self.client.table(self.base_id, self.table_investors)
@@ -90,6 +91,52 @@ class AirtableService:
             return investors
         except Exception:
             return []
+
+    def _generate_mock_investors(self, project_name: str) -> List[Investor]:
+        """Generate mock investor data for testing."""
+        mock_investors = [
+            Investor(
+                id=f"mock_airtable_1_{project_name}",
+                name="TechCorp Solutions",
+                website="https://techcorp-solutions.com",
+                linkedin_url="https://linkedin.com/company/techcorp-solutions",
+                investor_type="Strategic",
+                industry_focus="Technology",
+                location="San Francisco, CA",
+                ticket_min=1000000,
+                ticket_max=5000000,
+                is_warm_lead=True,
+                source="airtable",
+            ),
+            Investor(
+                id=f"mock_airtable_2_{project_name}",
+                name="Innovate Capital",
+                website="https://innovate-capital.com",
+                linkedin_url="https://linkedin.com/company/innovate-capital",
+                investor_type="Financial",
+                industry_focus="Fintech",
+                location="New York, NY",
+                ticket_min=500000,
+                ticket_max=2000000,
+                is_warm_lead=True,
+                source="airtable",
+            ),
+            Investor(
+                id=f"mock_airtable_3_{project_name}",
+                name="Green Energy Ventures",
+                website="https://green-energy-ventures.com",
+                linkedin_url="https://linkedin.com/company/green-energy-ventures",
+                investor_type="Strategic",
+                industry_focus="Clean Energy",
+                location="Austin, TX",
+                ticket_min=2000000,
+                ticket_max=10000000,
+                is_warm_lead=True,
+                source="airtable",
+            ),
+        ]
+        print(f"DEBUG: Generated {len(mock_investors)} mock Airtable investors for project '{project_name}'")
+        return mock_investors
 
     def create_project(self, project_name: str, investors: List[Investor]) -> Optional[str]:
         """Create a new project row and return its Airtable record id."""
