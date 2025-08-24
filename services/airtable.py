@@ -58,7 +58,8 @@ class AirtableService:
             table = self.client.table(self.base_id, self.table_investors)
             # Basic filter example; adapt to your Airtable schema as needed
             # Updated to use "Project Tag" field which matches the actual Airtable schema
-            formula = f"{{Project Tag}} = '{project_name}'"
+            # Handle comma-separated project tags by using FIND function
+            formula = f"FIND('{project_name}', {{Project Tag}}) > 0"
             records = table.all(formula=formula)
             investors: List[Investor] = []
             for r in records:
