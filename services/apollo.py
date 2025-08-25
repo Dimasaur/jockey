@@ -130,6 +130,7 @@ class ApolloService:
                 payload["funding_stages"] = [query.funding_stage]
 
             logger.info(f"Apollo company search payload: {payload}")
+            print(f"DEBUG: Apollo payload being sent: {payload}")
             resp = requests.post(org_search_url, headers=headers, json=payload, timeout=30)
 
             if resp.status_code != 200:
