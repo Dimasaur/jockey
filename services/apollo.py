@@ -75,31 +75,30 @@ class ApolloService:
             if query.keywords:
                 payload["q_organization_keywords"] = query.keywords
 
-            # Add industry filters
+            # Add industry filters using correct Apollo parameter
             if query.industries:
-                payload["industries"] = query.industries
+                payload["q_organization_keyword_tags"] = query.industries
             elif query.industry:
-                payload["industries"] = [query.industry]
+                payload["q_organization_keyword_tags"] = [query.industry]
 
-            # Add location filters
+            # Add location filters using correct Apollo parameter
             if query.country:
-                payload["locations"] = [query.country]
+                payload["organization_locations"] = [query.country]
             elif query.state:
-                payload["locations"] = [query.state]
+                payload["organization_locations"] = [query.state]
             elif query.city:
-                payload["locations"] = [query.city]
+                payload["organization_locations"] = [query.city]
             elif query.location:
-                payload["locations"] = [query.location]
+                payload["organization_locations"] = [query.location]
 
-            # Add employee count filters (if supported by Apollo)
+            # Add employee count filters using correct Apollo parameter
             if query.employee_count_min or query.employee_count_max:
-                employee_filters = []
-                if query.employee_count_min:
-                    employee_filters.append(f"min:{query.employee_count_min}")
-                if query.employee_count_max:
-                    employee_filters.append(f"max:{query.employee_count_max}")
-                if employee_filters:
-                    payload["employee_ranges"] = employee_filters
+                if query.employee_count_min and query.employee_count_max:
+                    payload["organization_num_employees_ranges"] = [f"{query.employee_count_min},{query.employee_count_max}"]
+                elif query.employee_count_min:
+                    payload["organization_num_employees_ranges"] = [f"{query.employee_count_min},999999"]
+                elif query.employee_count_max:
+                    payload["organization_num_employees_ranges"] = [f"1,{query.employee_count_max}"]
 
             # Add revenue filters (if supported by Apollo)
             if query.revenue_min or query.revenue_max:
